@@ -1,64 +1,36 @@
-#!/bin/bash
-# =========================================================
-# storage.sh - Create Storage Account with Private Endpoint
-# For AZ-104 portfolio project
-# =========================================================
+#!/usr/bin/env bash
+set -e
 
-# Variables
-RG_APP="rg-az104-app"
-LOC="westeurope"
-SA_NAME="staz104$RANDOM"       # Storage account name must be unique
-VNET_NAME="vnet-app"
-SUBNET_NAME="app"
-DNS_RG="rg-az104-hub"          # Where your DNS zone lives
-DNS_ZONE="privatelink.blob.core.windows.net"
-
-echo "Creating Storage Account: $SA_NAME in $RG_APP"
-
-# Create storage account
+echo "Creating storage account: $SA"
 az storage account create \
-  -g $RG_APP \
-  -n $SA_NAME \
-  -l $LOC \
-  --sku Standard_LRS \
-  --kind StorageV2 \
-  --https-only true
+  -g "$RG_APP" -n "$SA" -l "$LOC" \
+  --sku Standard_LRS --kind StorageV2 --https-only true
 
-echo "Storage Account created: $SA_NAME"
+SA_ID=$(az storage account show -g "$RG_APP" -n "$SA" --query id -o tsv)
 
-# Create Private Endpoint
-echo "Creating Private Endpoint for Blob service..."
+# Skapa Private Endpoint i app-subnät
 az network private-endpoint create \
-  -g $RG_APP \
-  -n pe-$SA_NAME-blob \
-  --vnet-name $VNET_NAME \
-  --subnet $SUBNET_NAME \
-  --private-connection-resource-id $(az storage account show -n $SA_NAME -g $RG_APP --query id -o tsv) \
+  -g "$RG_APP" \
+  -n "pe-$SA-blob" \
+  --vnet-name "$VNET_APP" \
+  --subnet "$SUBNET_APP" \
+  --private-connection-resource-id "$SA_ID" \
   --group-id blob \
-  --connection-name peconn-$SA_NAME-blob
+  --connection-name "peconn-$SA-blob"
 
-# Create Private DNS Zone if not exists
-echo "Ensuring Private DNS Zone exists..."
-az network private-dns zone create -g $DNS_RG -n $DNS_ZONE
-
-# Link VNet to DNS Zone
-echo "Linking VNet to Private DNS Zone..."
+# Skapa Private DNS zon + länk + DNS zone group (auto A-records)
+az network private-dns zone create -g "$RG_APP" -n "$DNS_ZONE" --query id -o tsv >/dev/null
 az network private-dns link vnet create \
-  -g $DNS_RG \
-  -n link-$VNET_NAME \
-  -z $DNS_ZONE \
-  -v $VNET_NAME \
-  --registration-enabled false
+  -g "$RG_APP" -n "link-$VNET_APP" \
+  -z "$DNS_ZONE" -v "$VNET_APP" --registration-enabled false
 
-# Create DNS record for storage account
-echo "Adding DNS A-record for storage account..."
-PE_IP=$(az network private-endpoint show -g $RG_APP -n pe-$SA_NAME-blob --query "customDnsConfigs[0].ipAddresses[0]" -o tsv)
+# Knyt PE till DNS-zonen (zone group)
+PE_ID=$(az network private-endpoint show -g "$RG_APP" -n "pe-$SA-blob" --query id -o tsv)
+az network private-endpoint dns-zone-group create \
+  --endpoint-name "pe-$SA-blob" \
+  --name "zonegrp-$SA-blob" \
+  --resource-group "$RG_APP" \
+  --private-dns-zone "$DNS_ZONE" \
+  --zone-name "privatelink" >/dev/null
 
-az network private-dns record-set a add-record \
-  -g $DNS_RG \
-  -z $DNS_ZONE \
-  -n $SA_NAME \
-  -a $PE_IP
-
-echo "Private Endpoint and DNS setup completed!"
-echo "Test inside VNet: curl -I https://$SA_NAME.blob.core.windows.net"
+echo "Test inside VM via Bastion: curl -I https://$SA.blob.core.windows.net"
