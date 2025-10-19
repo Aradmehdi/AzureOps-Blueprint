@@ -1,9 +1,9 @@
-AzureOps Blueprint
+# AzureOps Blueprint
 
 An end-to-end Azure lab environment built to demonstrate the core skills from AZ-104: Microsoft Azure Administrator.
 This project simulates a mini enterprise cloud architecture that is secure, scalable, and cost-controlled.
 
-Purpose
+# Purpose
 
 Showcase all core components covered in AZ-104.
 
@@ -13,7 +13,7 @@ Serve as a portfolio project to highlight Azure administration and cloud operati
 
  Architecture
 
-Includes:
+# Includes:
 
 Hub–Spoke network topology with Azure Bastion for secure access.
 
@@ -29,37 +29,10 @@ Azure Policy for compliance.
 
 Azure Budget for cost governance.
 
-📸 Architecture diagram:
+# Architecture diagram:
 
 
-
-azureops-blueprint/
-│ README.md
-│
-├─ code/
-│   ├─ 00_vars.sh         # Base variables
-│   ├─ 10_network.sh      # Hub–Spoke + Bastion + Load Balancer
-│   ├─ 20_vmss.sh         # VM Scale Set with NGINX demo
-│   ├─ 30_storage.sh      # Storage + Private Endpoint + DNS
-│   ├─ 40_backup.sh       # Recovery Services Vault + VM backup
-│   ├─ 50_monitoring.sh   # Action Group + CPU Alert
-│   ├─ 60_policy.sh       # Policy assignments
-│   └─ 70_budget.sh       # Budget via ARM
-│
-└─ docs/
-    └─ screenshots/
-       hub-spoke.png
-       bastion-login.png
-       vmss-demo.png
-       alerts.png
-       storage-pe.png
-       dns-zone.png
-       backup.png
-       policy.png
-       budget.png
-
-
- Deployment Steps:
+# Deployment Steps:
  
 1. Load variables
 source code/00_vars.sh
@@ -77,7 +50,7 @@ Validation: Check Network topology in the portal → hub and spoke are peered. B
 Validation:
 
 curl http://<LB-IP>
-# output: "AZ-104 demo via VMSS"
+#output: "AZ-104 demo via VMSS"
 
 4. Storage with Private Endpoint + DNS
 ./code/30_storage.sh
@@ -86,7 +59,7 @@ curl http://<LB-IP>
 Validation (from Bastion VM):
 
 curl -I https://$SA.blob.core.windows.net
-# returns 403/404 (good: DNS works, but requires auth)
+#returns 403/404 (good: DNS works, but requires auth)
 
 5. Backup
 ./code/40_backup.sh
@@ -113,7 +86,7 @@ Validation: Try to deploy a resource without the required tag → deployment den
 Validation: Portal → Cost Management + Billing → Budgets → budget visible
 
 
-Summary
+# Summary
 
 AzureOps Blueprint demonstrates:
 
@@ -130,3 +103,5 @@ Proactive monitoring & alerting.
 Strong governance with Policy and Budget.
 
 This project is a complete AZ-104 portfolio demo that can be used as a template for real-world enterprise Azure environments.
+
+
