@@ -30,7 +30,7 @@ Azure Policy for compliance.
 Azure Budget for cost governance.
 
 # Architecture diagram:
-
+docs/screenshots/Architecture diagram.png
 
 # Deployment Steps:
  
